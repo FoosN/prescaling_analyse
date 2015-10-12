@@ -43,7 +43,11 @@ import matplotlib.pyplot as pp
 #sys.path.append("/progs/progsDev/gitRepo/prescaling_analyse")
 #sys.path.append("/data/bioxsoft/bin")
 
+
 def interactiv_path():
+    """ function to take directly from the command line the file and determine 
+    if it came from XSCALE or XDS
+    this return list of "path" and the file type"""
     global maninput_files    
     maninput_files =[]
     global filetype
@@ -65,6 +69,9 @@ def interactiv_path():
     print filetype
 
 def determine_reso(filetype, maninput_files):
+    """function to determine the resolution min used for XSCALE or for XDS_ASCII
+    in this last case it's read from CORRECT.LP if CORRECT.LP is in this same
+    directory as XDS_ASCII.HKL"""
     resoTable = []
     resolution = []
     if filetype == "XSCALE":
@@ -93,13 +100,18 @@ def determine_reso(filetype, maninput_files):
     return resoCut
 
 def export_conv_table(truePath):
+    """ function to return a list of number to create table of conversion
+    betweeen original input and the script output (renumbering)"""
     towrite = []    
     for entry in truePath:
         towrite.append("number "+str(truePath.index(entry)+1)+" is "+entry+" \n")
     return towrite
         
 def findPath_of_originalFiles(inputfiles):
-    """find the path to the HKL files from XSCALE.HKL"""
+    """find the path of the HKL files from XSCALE.HKL reading.
+    It return create : it's object to said "ok we can continue" and truePath : 
+    list object whcich contain the path for *.mtz, inputFile : is the original 
+    input given by the user"""
     #inputfiles is a path to XSCALE.HKL output file    
     for arg in inputfiles:
         try:
@@ -146,6 +158,8 @@ def findPath_of_originalFiles(inputfiles):
 #in mtz
 
 def convert_in_mtz(i, j):
+    """ function to run xdsconv.py in a terminal to convert *.HKL in *.mtz
+    with the -a option """
 #    j = 0
 #    mtzPath=[]
 #    for i in truePath:
@@ -157,6 +171,9 @@ def convert_in_mtz(i, j):
     os.chdir("../")
     
 def search_mtz_file(numberJ):
+    """ function to determine if conversion of *.HKL in *.mtz is finished and
+    where are liocaliszed the *.mtz files this return a list of path for each 
+    *.mtz file """
     i = 1
     ready = True
     while ready is False:
@@ -175,11 +192,12 @@ def search_mtz_file(numberJ):
 #        os.chdir("../")
 #    return mtzPath
         #mtzPath is the list of .mtz Path for use with SFTOOLS
-        
-# function to create different .HKL based on the XSCALE.HKL 
-# this function will split the XSCALE in different split.HKL file 
-        
+                
 def parse_XSCALE_dataset(maninput_files):
+    """ function to decipher the XSCALE.HKL file. It create object : info
+    which contain the information of the XSCALE.HKL header. And return a 
+    dictionary object named dataset : the dataset XSCALE.HKL is splited 
+    as originaly in split.HKL (after scaling). It's all done by python"""
     for i in maninput_files:
         with open(i) as original :
             info = []
@@ -220,6 +238,10 @@ def parse_XSCALE_dataset(maninput_files):
     return dataset
 
 def parse_XSCALE_dataset_fast(maninput_files):
+    """ function to decipher the XSCALE.HKL file. the dataset XSCALE.HKL is
+    splited as originaly in split.HKL (after scaling) It's done 
+    with linux command line, it's the same final goal as the function 
+    'parse_XSCALE_dataset' """
     for i in maninput_files:
         with open(i) as original :
             nb=1
@@ -240,13 +262,13 @@ def parse_XSCALE_dataset_fast(maninput_files):
     os.system("rm H T")
         
         
-
-#function to write text file, this file will be use by sftools (path should be mtzPath) 
 def writing_list_in_file(path1, file2write, filetype):
+    """ funtion to write text file from a python list object"""
     g = 0
     if filetype == "sftoolsINP":
         command = file2write.__iter__()
         for i in file2write: 
+            #this file will be use by sftools (path should be mtzPath)
            outputfile = open(os.path.join(path1, "SFTOOLS.INP"+str(g)), 'w')
            outputfile.write(command.next())
            g += 1
@@ -266,15 +288,16 @@ def writing_list_in_file(path1, file2write, filetype):
                 outputfile.write(toprint) 
             g +=1
         
-#function to list the number of file entry in XSCALE.LP
+
 def find_list(filetype, path):
+    """ function to list the number of file entry in XSCALE.LP """
     towrite = []
     if filetype == "XSCALE":
         for i in path:
             towrite.append("file name "+str(path.index(i))+" is the number "+str(path.index(i)+1)+" in XSCALE.LP or HKL \n")
     return towrite
         
-#function to list and execute the INP of SFTOOLS 
+
 def list_and_execute_SFTOOLS(path):
     """this function check the name and number of files present for SFTOOLS
     and run SFTOOLS with each one of them"""
@@ -284,11 +307,10 @@ def list_and_execute_SFTOOLS(path):
     for i in filteredINP:
         os.system("sftools <"+str(i)+">SFTOOLS.out"+str(filteredINP.index(i)))
     
-
-#mtz1 and mtz2 come from xdsconv.py which must run with all the XDS_ASCII from the XSCALE.INP
+    
 def sftools_input(mtzList, resoCut):
     """ this function take mtz from the list and create new list with entry
-    to create input file for sftools"""
+    to create input file for sftools. It use and retrun dict """
     i = 0
     j = i+1
     Job = []
@@ -315,10 +337,9 @@ CHECKHKL\nSELECT RESOL > "+str(resoCut)+"\n"+"CORREL\nCOLUMN 4 10\nSTOP\ny\nEOF\
 #    print sftools
     
 def grab_sftools_out(YorN):
-    #idea : pick multiple sftools output, put them in list,
-#from this list, read object (sftools.log) and read line in the sftools.log
-#extract table from this file.
-#if i use popen to run sftools, it would be smart to populate this list with the object create for each run of sftools
+    """function to find the output of SFTOOLS and create table 
+    if YorN is y : the table contain CC ano by reso shell and if it's N or other
+    value : it contain only the overall stats (end of the table from SFTOOLS"""
     filePresent = os.listdir("./")
     filesOut = [files for files in filePresent if "SFTOOLS.out" in files]
     tables = []
@@ -338,6 +359,8 @@ def grab_sftools_out(YorN):
     return overallStats
     
 def parse_and_prepare(overallStats):
+    """ parse en prepare overallStats from 'grab_sftools_out' to allow
+    calculation of distance, it return distance value for each SFTOOLS output"""
     newstats = []    
     for i in overallStats:
         newstats.append(i.split()[3])
@@ -347,6 +370,8 @@ def parse_and_prepare(overallStats):
     
 
 def get_distance(mtzlist, job_vs):
+    """ get the distance and the corresponding set of dataset which are the 
+    source of the calculation (dataset1 vs dataset2) and return matrix of distance """
     n = len(mtzlist)
     dist_mat = np.zeros([n,n])
     for i in job_vs["distance"]:
@@ -354,6 +379,9 @@ def get_distance(mtzlist, job_vs):
     return dist_mat
 
 def statsByresol(tables):
+    """ filter and clean the table of values from SFTOOLS,
+    remove everything different from number and dot.
+    It return dictionnary which contain value _x ane _y for graph tracing or calcul"""
     dictTable = {}
     statDic = {}
     for i in tables:
@@ -379,18 +407,21 @@ def statsByresol(tables):
     return statDic
     
 def plotData(statDic, job_vs):
-        pp.clf()
-        x = statDic["0_x"]        
-        legends = []
-        temp = []
-        for i in statDic.keys():
-            if '_y' in i :
-                temp.append(i)
-                temp.sort()
-        for j in temp:
-            pp.xlim(float(x[1]), float(x[-1]))
-            pp.plot(x, statDic[str(j)])
-            legends.append(job_vs["vs"][temp.index(j)]) #is to give correspondence between data Y and the correlation vs
+    """ form dict entry with x and y value, (y are value of correlation
+    between different dataset one vs one. And trace graph and save fig in file"""
+    pp.clf()
+    x = statDic["0_x"]        
+    legends = []
+    temp = []
+    for i in statDic.keys():
+        if '_y' in i :
+            temp.append(i)
+            temp.sort()
+    for j in temp:
+        pp.xlim(float(x[1]), float(x[-1]))#Second lower res value and highest res value
+        pp.plot(x, statDic[str(j)])
+        legends.append(job_vs["vs"][temp.index(j)]) 
+        #is to give correspondence between data Y and the correlation vs
 #        ticks = np.arange(int(min(datasets[i-1].table[colXnmbr])), int(max(datasets[i-1].table[colXnmbr])), 1)
 #        ticks = ticks.tolist()
 #        ticks.reverse()
@@ -402,28 +433,29 @@ def plotData(statDic, job_vs):
 #        print ticks
 #        print type(ticks)
 #        pp.xticks(ticks, labels)       
-            pp.legend(legends, loc= 'best', prop={'size':8})
-            pp.xlabel("Resolution Angstrom")
-            pp.ylabel("anomalous_correlation")
-            pp.savefig(os.path.join("./correlationAno1to1.png"),
-            dpi=300, facecolor='w', edgecolor='w', orientation='landscape')
-            pp.figure()
-            pp.plot()
-            pp.close()            
+        pp.legend(legends, loc= 'best', prop={'size':8})
+        pp.xlabel("Resolution Angstrom")
+        pp.ylabel("anomalous_correlation")
+        pp.savefig(os.path.join("./correlationAno1to1.png"),
+        dpi=300, facecolor='w', edgecolor='w', orientation='landscape')
+        pp.figure()
+        pp.plot()
+        pp.close()            
          
         
     
 
 
-####################take the decision of how to re run XSCALE and generate XSCALE.INP
+#############take the decision of how to re run XSCALE and generate XSCALE.INP
 
 
     
 
 
    
-#execute scripts:
+### Script execution : 
 initial = interactiv_path()
+# take argument in command line as intial path
 path = "./"
 if filetype == "XDS_ASCII":
    truePath = maninput_files
@@ -448,6 +480,7 @@ elif filetype == "XSCALE":
 
 mtzPath = []
 j = 0
+#mtz conversion
 for i in truePath :
     convert_in_mtz(i, j)
     j+=1
@@ -457,22 +490,27 @@ if filetype == "XSCALE":
     towrite = find_list("XSCALE", mtzPath)
     writing_list_in_file(path, towrite ,"XDS_ASCII")    
 print "this is mtzlist "+str(mtzPath)
-resocut = raw_input ('set the resolution cut-off the default will be :')# \
-#+ str(resolution) +' :')
+#set the resolution for SFTOOLS.INP
+resocut = raw_input ('set the resolution cut-off the default will be :')
 if resocut == '':
     resoCut = determine_reso(filetype, truePath)
 else :
     resoCut = resocut
 job_vs = sftools_input(mtzPath, resoCut)
 job_vs["truepath"]= truePath #keep the truePath in object for future function
+#write SFTOOLS.INP
 writing_list_in_file(path, job_vs["job"], "sftoolsINP")
+#execute SFTOOLS with all the input created before
 list_and_execute_SFTOOLS(path)
 overallStats = grab_sftools_out("N")
 byresoStats = grab_sftools_out("y")
+#find stats and create object containing them
 statDic = statsByresol(byresoStats)
+# plot statistic CC ano vs Resolution shell for all one to one correlation calcul
 plotData(statDic, job_vs)
 job_vs["distance"] = parse_and_prepare(overallStats)
 print "ceci est job distance :"+ str(job_vs["distance"])
+# create distance matrix and do the dendrogram after what it save it as figure.png
 matrix_dis = get_distance(mtzPath, job_vs)
 print "ceci est la matrice de distance :"+ "\n" + str(matrix_dis)
 pp.clf()
