@@ -287,8 +287,12 @@ def writing_list_in_file(path1, file2write, filetype):
                 toprint = i
                 outputfile.write(toprint) 
             g +=1
-        
-
+    elif filetype =="matrix":
+        outputfile = open(os.path.join(path1, "distance_matrix_2D"), 'w')  
+        for i in file2write:
+            toprint = i
+            outputfile.write(toprint)
+            
 def find_list(filetype, path):
     """ function to list the number of file entry in XSCALE.LP """
     towrite = []
@@ -522,6 +526,7 @@ print "ceci est job  : " + str (job_vs["job"])
 # create distance matrix and do the dendrogram after what it save it as figure.png
 matrix_dis = get_distance(mtzPath, job_vs)
 print "ceci est la matrice de distance :"+ "\n" + str(matrix_dis)
+writing_list_in_file(path, str(matrix_dis), "matrix")
 pp.clf()
 hac.dendrogram(hac.linkage(matrix_dis, 'complete'), color_threshold=0.15)
 pp.title('Overall anomalous dissimilarity')
