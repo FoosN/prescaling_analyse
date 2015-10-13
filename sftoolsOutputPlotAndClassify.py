@@ -302,6 +302,7 @@ def list_and_execute_SFTOOLS(path):
     """this function check the name and number of files present for SFTOOLS
     and run SFTOOLS with each one of them"""
     sftoolsINP = os.listdir(path)
+    sftoolsINP.sort()
     filteredINP = [i for i in sftoolsINP if "SFTOOLS" in i]
 #execute of sftools    
     for i in filteredINP:
@@ -342,6 +343,7 @@ def grab_sftools_out(YorN):
     value : it contain only the overall stats (end of the table from SFTOOLS"""
     filePresent = os.listdir("./")
     filesOut = [files for files in filePresent if "SFTOOLS.out" in files]
+    filesOut.sort()
     tables = []
     overallStats = []
     for entry in filesOut:
@@ -374,8 +376,10 @@ def get_distance(mtzlist, job_vs):
     source of the calculation (dataset1 vs dataset2) and return matrix of distance """
     n = len(mtzlist)
     dist_mat = np.zeros([n,n])
+    j = 0
     for i in job_vs["distance"]:
-        dist_mat[job_vs["vs"][job_vs["distance"].index(i)][0], job_vs["vs"][job_vs["distance"].index(i)][1]] = i
+        dist_mat[job_vs["vs"][j][0], job_vs["vs"][j][1]] = i
+        j+=1
     return dist_mat
 
 def statsByresol(tables):
@@ -420,7 +424,7 @@ def plotData(statDic, job_vs):
     for j in temp:
         pp.xlim(float(x[1]), float(x[-1]))#Second lower res value and highest res value
         pp.plot(x, statDic[str(j)])
-        legends.append(job_vs["vs"][temp.index(j)]) 
+        legends.append(job_vs["vs_read"][temp.index(j)]) 
         #is to give correspondence between data Y and the correlation vs
 #        ticks = np.arange(int(min(datasets[i-1].table[colXnmbr])), int(max(datasets[i-1].table[colXnmbr])), 1)
 #        ticks = ticks.tolist()
@@ -508,8 +512,13 @@ byresoStats = grab_sftools_out("y")
 statDic = statsByresol(byresoStats)
 # plot statistic CC ano vs Resolution shell for all one to one correlation calcul
 plotData(statDic, job_vs)
+print "ceci est overallStats : " + str(overallStats)
 job_vs["distance"] = parse_and_prepare(overallStats)
 print "ceci est job distance :"+ str(job_vs["distance"])
+print "ceci est job vs : " + str (job_vs["vs"])
+print "ceci est job vs_read : " + str (job_vs["vs_read"])
+print "ceci est job  : " + str (job_vs["job"])
+
 # create distance matrix and do the dendrogram after what it save it as figure.png
 matrix_dis = get_distance(mtzPath, job_vs)
 print "ceci est la matrice de distance :"+ "\n" + str(matrix_dis)
