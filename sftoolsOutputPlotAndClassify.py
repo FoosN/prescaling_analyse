@@ -165,8 +165,9 @@ def convert_in_mtz(i, j):
 #    for i in truePath:
     os.mkdir("./dataset"+str(j+1))
     os.chdir("./dataset"+str(j+1))
+    os.system("ln -s ../"+i+" "+str(j+1))
 #    nPath = "./conv"+str(j)+"/ccp4/"+str(mtz)
-    os.system("xdsconv.py ../"+i+" -a ccp4") 
+    os.system("xdsconv.py "+str(j+1)+" -a ccp4") 
     j+=1        
     os.chdir("../")
     
@@ -488,12 +489,18 @@ elif filetype == "XSCALE":
 
 mtzPath = []
 j = 0
+
 #mtz conversion
-for i in truePath :
-    convert_in_mtz(i, j)
-    j+=1
 numberJ = len(truePath)
-mtzPath = search_mtz_file(numberJ)
+if "dataset" in str(os.listdir("./")):
+    mtzPath = search_mtz_file(numberJ)
+
+else : 
+    for i in truePath :
+        convert_in_mtz(i, j)
+        j+=1
+    numberJ = len(truePath)
+    mtzPath = search_mtz_file(numberJ)
 if filetype == "XSCALE":
     towrite = find_list("XSCALE", mtzPath)
     writing_list_in_file(path, towrite ,"XDS_ASCII")    
